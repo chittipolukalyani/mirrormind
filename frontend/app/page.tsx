@@ -35,7 +35,7 @@ export default function Home() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [error, setError] = useState("");
   const [inputMode, setInputMode] = useState<"voice" | "text">("voice");
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   const startSession = async () => {
     setPhase("session");
@@ -59,7 +59,7 @@ export default function Home() {
   };
 
   const startListening = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       setError("Voice not supported. Use text mode or Chrome browser.");
       return;
