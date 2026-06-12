@@ -26,7 +26,9 @@ export default function Session() {
   const [error, setError] = useState("");
   const [inputMode, setInputMode] = useState<"voice" | "text">("voice");
   const [started, setStarted] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const shareCardRef = useRef<HTMLDivElement>(null);
 
   const startSession = async () => {
     setStarted(true);
@@ -96,6 +98,26 @@ export default function Session() {
     }
   };
 
+  const handleShare = async () => {
+    if (!shareCardRef.current || !analysis) return;
+    setSharing(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const canvas = await html2canvas(shareCardRef.current, {
+        backgroundColor: "#080810",
+        scale: 2,
+        useCORS: true,
+      });
+      const link = document.createElement("a");
+      link.download = "mirrormind-profile.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } catch (e) {
+      console.error(e);
+    }
+    setSharing(false);
+  };
+
   const colorMap: Record<string, string> = { purple: "#9b7fe8", yellow: "#fbbf24", green: "#34d399" };
   const hasAnswer = getAnswer().length > 0;
 
@@ -107,7 +129,6 @@ export default function Session() {
     }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Inter:wght@300;400;500;600&family=DM+Mono:wght@400&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } textarea { resize: none; outline: none; } textarea::placeholder { color: #3a3a52; }`}</style>
 
-      {/* Back button */}
       <button onClick={() => router.push("/")} style={{
         position: "fixed", top: "24px", left: "24px",
         background: "transparent", border: "1px solid rgba(255,255,255,0.07)",
@@ -239,48 +260,78 @@ export default function Session() {
         {/* RESULTS */}
         {phase === "results" && analysis && (
           <motion.div key="results" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} style={{ width: "100%", maxWidth: "720px" }}>
-            <div style={{ textAlign: "center", marginBottom: "48px" }}>
-              <div style={{ fontSize: "0.65rem", fontFamily: "'DM Mono', monospace", color: "#9b7fe8", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "16px" }}>Your Perception Profile</div>
-              <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.5rem, 4vw, 2.4rem)", fontWeight: 700, lineHeight: 1.3, marginBottom: "24px" }}>{analysis.headline}</h1>
-              <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", background: "#13131f", border: "1px solid rgba(155,127,232,0.2)", borderRadius: "20px", padding: "24px 40px", marginBottom: "48px" }}>
-                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: "3.5rem", fontWeight: 700, background: "linear-gradient(135deg, #9b7fe8, #c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{analysis.score}</span>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", color: "#7a7a92", letterSpacing: "0.1em", textTransform: "uppercase" }}>Perception Score</span>
-              </div>
-            </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px", marginBottom: "24px" }}>
-              {analysis.patterns.map((p, i) => (
-                <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.15 }}
-                  style={{ background: "#13131f", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "16px", padding: "24px" }}>
-                  <span style={{ display: "inline-block", background: `${colorMap[p.color] || "#9b7fe8"}18`, color: colorMap[p.color] || "#9b7fe8", fontSize: "0.65rem", fontFamily: "'DM Mono', monospace", letterSpacing: "0.08em", textTransform: "uppercase", padding: "4px 10px", borderRadius: "100px", marginBottom: "12px" }}>{p.type}</span>
-                  <h3 style={{ fontSize: "0.95rem", fontWeight: 600, marginBottom: "8px" }}>"{p.title}"</h3>
-                  <p style={{ fontSize: "0.82rem", color: "#7a7a92", lineHeight: 1.65, fontWeight: 300, marginBottom: "16px" }}>{p.description}</p>
-                  <div style={{ height: "3px", background: "#0e0e1a", borderRadius: "2px", overflow: "hidden" }}>
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${p.frequency}%` }} transition={{ duration: 1, delay: i * 0.15 + 0.3 }}
-                      style={{ height: "100%", background: `linear-gradient(90deg, ${colorMap[p.color] || "#9b7fe8"}, ${colorMap[p.color] || "#9b7fe8"}88)`, borderRadius: "2px" }} />
+            {/* Shareable Card */}
+            <div ref={shareCardRef} style={{
+              background: "#080810", padding: "48px",
+              borderRadius: "24px", border: "1px solid rgba(155,127,232,0.2)",
+              marginBottom: "32px",
+            }}>
+              {/* Card Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.3rem" }}>
+                  Mirror<span style={{ color: "#9b7fe8", fontStyle: "italic" }}>Mind</span>
+                </div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", color: "#3a3a52", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                  Perception Profile
+                </div>
+              </div>
+
+              {/* Score + Headline */}
+              <div style={{ textAlign: "center", marginBottom: "40px" }}>
+                <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", background: "#13131f", border: "1px solid rgba(155,127,232,0.2)", borderRadius: "20px", padding: "20px 36px", marginBottom: "24px" }}>
+                  <span style={{ fontFamily: "'Playfair Display', serif", fontSize: "3rem", fontWeight: 700, background: "linear-gradient(135deg, #9b7fe8, #c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{analysis.score}</span>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "#7a7a92", letterSpacing: "0.1em", textTransform: "uppercase" }}>Perception Score</span>
+                </div>
+                <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.2rem, 3vw, 1.8rem)", fontWeight: 700, lineHeight: 1.3, maxWidth: "560px", margin: "0 auto" }}>
+                  {analysis.headline}
+                </h2>
+              </div>
+
+              {/* Patterns */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px", marginBottom: "24px" }}>
+                {analysis.patterns.map((p, i) => (
+                  <div key={i} style={{ background: "#13131f", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "16px" }}>
+                    <div style={{ fontSize: "0.6rem", fontFamily: "'DM Mono', monospace", color: colorMap[p.color] || "#9b7fe8", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px" }}>{p.type}</div>
+                    <div style={{ fontSize: "0.85rem", fontWeight: 600, marginBottom: "8px", color: "#f0eee8" }}>"{p.title}"</div>
+                    <div style={{ height: "2px", background: "#0e0e1a", borderRadius: "1px", overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${p.frequency}%`, background: `linear-gradient(90deg, ${colorMap[p.color] || "#9b7fe8"}, ${colorMap[p.color] || "#9b7fe8"}88)`, borderRadius: "1px" }} />
+                    </div>
+                    <div style={{ fontSize: "0.6rem", color: "#3a3a52", fontFamily: "'DM Mono', monospace", marginTop: "4px", textAlign: "right" }}>{p.frequency}%</div>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
-                    <span style={{ fontSize: "0.65rem", color: "#3a3a52", fontFamily: "'DM Mono', monospace" }}>Frequency</span>
-                    <span style={{ fontSize: "0.65rem", color: "#3a3a52", fontFamily: "'DM Mono', monospace" }}>{p.frequency}%</span>
-                  </div>
-                </motion.div>
-              ))}
+                ))}
+              </div>
+
+              {/* Strength + Growth */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "32px" }}>
+                <div style={{ background: "rgba(52,211,153,0.05)", border: "1px solid rgba(52,211,153,0.15)", borderRadius: "12px", padding: "16px" }}>
+                  <div style={{ fontSize: "0.6rem", fontFamily: "'DM Mono', monospace", color: "#34d399", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "6px" }}>✨ Strength</div>
+                  <p style={{ fontSize: "0.8rem", color: "#f0eee8", lineHeight: 1.5, fontWeight: 300 }}>{analysis.strength}</p>
+                </div>
+                <div style={{ background: "rgba(155,127,232,0.05)", border: "1px solid rgba(155,127,232,0.15)", borderRadius: "12px", padding: "16px" }}>
+                  <div style={{ fontSize: "0.6rem", fontFamily: "'DM Mono', monospace", color: "#9b7fe8", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "6px" }}>🎯 Grow Here</div>
+                  <p style={{ fontSize: "0.8rem", color: "#f0eee8", lineHeight: 1.5, fontWeight: 300 }}>{analysis.growth}</p>
+                </div>
+              </div>
+
+              {/* Card Footer */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "20px" }}>
+                <p style={{ fontSize: "0.7rem", color: "#3a3a52", fontFamily: "'DM Mono', monospace" }}>mirrormind-gules.vercel.app</p>
+                <p style={{ fontSize: "0.7rem", color: "#3a3a52", fontFamily: "'DM Mono', monospace" }}>Try it free →</p>
+              </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "40px" }}>
-              <div style={{ background: "rgba(52,211,153,0.05)", border: "1px solid rgba(52,211,153,0.15)", borderRadius: "16px", padding: "24px" }}>
-                <div style={{ fontSize: "1.2rem", marginBottom: "8px" }}>✨</div>
-                <div style={{ fontSize: "0.65rem", fontFamily: "'DM Mono', monospace", color: "#34d399", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>Your Strength</div>
-                <p style={{ fontSize: "0.88rem", color: "#f0eee8", lineHeight: 1.6, fontWeight: 300 }}>{analysis.strength}</p>
-              </div>
-              <div style={{ background: "rgba(155,127,232,0.05)", border: "1px solid rgba(155,127,232,0.15)", borderRadius: "16px", padding: "24px" }}>
-                <div style={{ fontSize: "1.2rem", marginBottom: "8px" }}>🎯</div>
-                <div style={{ fontSize: "0.65rem", fontFamily: "'DM Mono', monospace", color: "#9b7fe8", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>Grow Here</div>
-                <p style={{ fontSize: "0.88rem", color: "#f0eee8", lineHeight: 1.6, fontWeight: 300 }}>{analysis.growth}</p>
-              </div>
-            </div>
-
-            <div style={{ textAlign: "center", display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
+            {/* Action Buttons */}
+            <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
+              <button onClick={handleShare} disabled={sharing} style={{
+                background: "linear-gradient(135deg, #9b7fe8, #c084fc)",
+                color: "#fff", border: "none", padding: "14px 32px",
+                borderRadius: "100px", fontSize: "0.9rem", fontWeight: 600,
+                cursor: "pointer", boxShadow: "0 0 20px rgba(155,127,232,0.3)",
+                opacity: sharing ? 0.7 : 1,
+              }}>
+                {sharing ? "Generating..." : "📸 Download my profile card"}
+              </button>
               <button onClick={() => { setPhase("session"); setMessages([]); setTranscript(""); setTypedAnswer(""); setQuestionNum(0); setAnalysis(null); setError(""); setStarted(false); }}
                 style={{ background: "transparent", border: "1px solid rgba(155,127,232,0.3)", color: "#9b7fe8", padding: "14px 32px", borderRadius: "100px", fontSize: "0.9rem", cursor: "pointer", fontWeight: 500 }}>
                 Start a new session
