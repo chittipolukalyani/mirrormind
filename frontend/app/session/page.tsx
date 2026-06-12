@@ -294,6 +294,7 @@ export default function Session() {
                   <div key={i} style={{ background: "#13131f", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "16px" }}>
                     <div style={{ fontSize: "0.6rem", fontFamily: "'DM Mono', monospace", color: colorMap[p.color] || "#9b7fe8", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px" }}>{p.type}</div>
                     <div style={{ fontSize: "0.85rem", fontWeight: 600, marginBottom: "8px", color: "#f0eee8" }}>"{p.title}"</div>
+                    <p style={{ fontSize: "0.78rem", color: "#7a7a92", lineHeight: 1.6, fontWeight: 300, marginBottom: "10px" }}>{p.description}</p>
                     <div style={{ height: "2px", background: "#0e0e1a", borderRadius: "1px", overflow: "hidden" }}>
                       <div style={{ height: "100%", width: `${p.frequency}%`, background: `linear-gradient(90deg, ${colorMap[p.color] || "#9b7fe8"}, ${colorMap[p.color] || "#9b7fe8"}88)`, borderRadius: "1px" }} />
                     </div>
